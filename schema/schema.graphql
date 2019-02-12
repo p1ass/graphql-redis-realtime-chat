@@ -1,0 +1,18 @@
+type Message{
+	user: String!
+	message: String!
+}
+
+type Mutation {
+	postMessage(user: String!, message: String!): Message
+}
+
+type Query {
+	messages: [Message!]!
+	users: [String!]!
+}
+
+type Subscription{
+	messagePosted(user: String!) Message!
+	userJoined(user: String!): String!
+}
