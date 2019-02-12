@@ -1,4 +1,4 @@
-type Message{
+type Message {
 	user: String!
 	message: String!
 }
@@ -12,7 +12,7 @@ type Query {
 	users: [String!]!
 }
 
-type Subscription{
-	messagePosted(user: String!) Message!
+type Subscription {
+	messagePosted(user: String!): Message!
 	userJoined(user: String!): String!
 }
