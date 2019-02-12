@@ -4,25 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/go-redis/redis"
+	"github.com/naoki-kishi/graphql-redis-realtime-chat/infrastructure"
 	"os"
 	"time"
 )
-
-// NewRedisClient returns a client for redis.
-func NewRedisClient() *redis.Client {
-	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
-	})
-
-	_, err := client.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
-
-	return client
-}
 
 func main() {
 
@@ -33,7 +18,7 @@ func main() {
 	userName := os.Args[1]
 	userKey := "online" + userName
 
-	client := NewRedisClient()
+	client := infrastructure.NewRedisClient()
 	defer client.Close()
 
 	val, err := client.SetNX(userKey, userName, 2*time.Minute).Result()
@@ -48,11 +33,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 受け取ったメッセージをsubChanに流すgoroutine
-	subChan := make(chan string)
+	// 受け取ったメッセージをmsgChanに流すgoroutine
+	msgChan := make(chan string)
 
 	go func() {
-		clientForRoom := NewRedisClient()
+		clientForRoom := infrastructure.NewRedisClient()
 		defer clientForRoom.Close()
 
 		pubsub := clientForRoom.Subscribe("room")
@@ -66,9 +51,10 @@ func main() {
 
 			switch msg := msgi.(type) {
 			case *redis.Subscription:
-				break
+				msgChan <- "connected"
+
 			case *redis.Message:
-				subChan <- fmt.Sprint(msg.Payload)
+				msgChan <- fmt.Sprint(msg.Payload)
 
 			default:
 				panic("unreached")
@@ -95,14 +81,14 @@ func main() {
 	client.Publish("room", userName+" has joined")
 	defer client.Publish("room", userName+" has left")
 
+	// 各channelから受け取った情報を出力する部分
 	chatExit := false
-
 	for !chatExit {
 		prompt := ">"
 		fmt.Print(prompt)
 
 		select {
-		case msg := <-subChan:
+		case msg := <-msgChan:
 			fmt.Println(msg)
 
 		case line := <-sayChan:
