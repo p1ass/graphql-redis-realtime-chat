@@ -1,21 +1,23 @@
-package mainw
+package main
 
 import (
 	"bufio"
 	"fmt"
 	"github.com/go-redis/redis"
+	"github.com/naoki-kishi/graphql-redis-realtime-chat/graphql/server"
 	"github.com/naoki-kishi/graphql-redis-realtime-chat/infrastructure"
+
 	"os"
 	"time"
 )
 
 func main() {
 
-	if len(os.Args) != 2 {
-		fmt.Println("There is an error in the argument")
-		os.Exit(1)
-	}
-	userName := os.Args[1]
+	// if len(os.Args) != 2 {
+	// 	fmt.Println("There is an error in the argument")
+	// 	os.Exit(1)
+	// }
+	userName := "hoge"
 	userKey := "online" + userName
 
 	client := infrastructure.NewRedisClient()
@@ -82,21 +84,23 @@ func main() {
 	defer client.Publish("room", userName+" has left")
 
 	// 各channelから受け取った情報を出力する部分
-	chatExit := false
-	for !chatExit {
-		prompt := ">"
-		fmt.Print(prompt)
+	// chatExit := false
+	// for !chatExit {
+	// 	prompt := ">"
+	// 	fmt.Print(prompt)
 
-		select {
-		case msg := <-msgChan:
-			fmt.Println(msg)
+	// 	select {
+	// 	case msg := <-msgChan:
+	// 		fmt.Println(msg)
 
-		case line := <-sayChan:
-			if line == "/exit" {
-				chatExit = true
-				return
-			}
-			client.Publish("room", userName+": "+line)
-		}
-	}
+	// 	case line := <-sayChan:
+	// 		if line == "/exit" {
+	// 			chatExit = true
+	// 			return
+	// 		}
+	// 		client.Publish("room", userName+": "+line)
+	// 	}
+	// }
+
+	server.StartServer()
 }
