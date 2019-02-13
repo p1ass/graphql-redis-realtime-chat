@@ -51,7 +51,6 @@ func (r *Resolver) Subscription() SubscriptionResolver {
 type mutationResolver struct{ *Resolver }
 
 func (r *mutationResolver) PostMessage(ctx context.Context, user string, message string) (*Message, error) {
-
 	isLogined, err := r.checkLogin(user)
 	if err != nil {
 		return nil, err
@@ -59,6 +58,7 @@ func (r *mutationResolver) PostMessage(ctx context.Context, user string, message
 	if !isLogined {
 		return nil, errors.New("This user has not been created")
 	}
+
 	// Publish a message.
 	m := Message{
 		User:    user,
@@ -75,6 +75,29 @@ func (r *mutationResolver) PostMessage(ctx context.Context, user string, message
 	log.Println("【Mutation】PostMessage : ", m)
 
 	return &m, nil
+}
+
+func (r *mutationResolver) CreateUser(ctx context.Context, user string) (string, error) {
+	// Set user to redis list.
+	val, err := r.redisClient.SAdd("users", user).Result()
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+
+	if val == 0 {
+		return "", errors.New("This User name has already used")
+	}
+	log.Println("createUser :", user)
+
+	// Notify new user joined.
+	r.mutex.Lock()
+	for _, ch := range r.userChannels {
+		ch <- user
+	}
+	r.mutex.Unlock()
+
+	return user, nil
 }
 
 type queryResolver struct{ *Resolver }
@@ -100,10 +123,12 @@ func (r *queryResolver) Users(ctx context.Context) ([]string, error) {
 type subscriptionResolver struct{ *Resolver }
 
 func (r *subscriptionResolver) MessagePosted(ctx context.Context, user string) (<-chan Message, error) {
-	err := r.createUser(user)
+	isLogined, err := r.checkLogin(user)
 	if err != nil {
-		log.Println(err)
 		return nil, err
+	}
+	if !isLogined {
+		return nil, errors.New("This user has not been created")
 	}
 
 	messages := make(chan Message, 1)
@@ -124,9 +149,12 @@ func (r *subscriptionResolver) MessagePosted(ctx context.Context, user string) (
 	return messages, nil
 }
 func (r *subscriptionResolver) UserJoined(ctx context.Context, user string) (<-chan string, error) {
-	err := r.createUser(user)
+	isLogined, err := r.checkLogin(user)
 	if err != nil {
 		return nil, err
+	}
+	if !isLogined {
+		return nil, errors.New("This user has not been created")
 	}
 
 	users := make(chan string, 1)
@@ -144,29 +172,6 @@ func (r *subscriptionResolver) UserJoined(ctx context.Context, user string) (<-c
 	log.Println("【Subscription】UserJoined : ", user)
 
 	return users, nil
-}
-
-func (r *Resolver) createUser(user string) error {
-	// Set user to redis list.
-	val, err := r.redisClient.SAdd("users", user).Result()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	if val == 0 {
-		return errors.New("This User name has already used")
-	}
-	log.Println("createUser :", user)
-
-	// Notify new user joined.
-	r.mutex.Lock()
-	for _, ch := range r.userChannels {
-		ch <- user
-	}
-	r.mutex.Unlock()
-
-	return nil
 }
 
 func (r *Resolver) checkLogin(user string) (bool, error) {

@@ -5,6 +5,7 @@ type Message {
 
 type Mutation {
 	postMessage(user: String!, message: String!): Message
+	createUser(user: String!): String!
 }
 
 type Query {
