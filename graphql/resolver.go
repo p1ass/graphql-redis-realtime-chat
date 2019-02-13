@@ -7,6 +7,7 @@ import (
 	"github.com/go-redis/redis"
 	"log"
 	"sync"
+	"time"
 )
 
 // Resolver implements ResolverRoot interface.
@@ -59,6 +60,16 @@ func (r *mutationResolver) PostMessage(ctx context.Context, user string, message
 		return nil, errors.New("This user has not been created")
 	}
 
+	// extend session expire
+	val, err := r.redisClient.SetXX(user, user, 60*time.Minute).Result()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	if val == false {
+		return nil, errors.New("This user has not been created")
+	}
+
 	// Publish a message.
 	m := Message{
 		User:    user,
@@ -78,14 +89,13 @@ func (r *mutationResolver) PostMessage(ctx context.Context, user string, message
 }
 
 func (r *mutationResolver) CreateUser(ctx context.Context, user string) (string, error) {
-	// Set user to redis list.
-	val, err := r.redisClient.SAdd("users", user).Result()
+	// This means that users has to call CreateUser again in 60 minutes.
+	val, err := r.redisClient.SetNX(user, user, 60*time.Minute).Result()
 	if err != nil {
 		log.Println(err)
 		return "", err
 	}
-
-	if val == 0 {
+	if val == false {
 		return "", errors.New("This User name has already used")
 	}
 	log.Println("createUser :", user)
@@ -103,20 +113,18 @@ func (r *mutationResolver) CreateUser(ctx context.Context, user string) (string,
 type queryResolver struct{ *Resolver }
 
 func (r *queryResolver) Users(ctx context.Context) ([]string, error) {
-	cmd := r.redisClient.SMembers("users")
-	if cmd.Err() != nil {
-		log.Println(cmd.Err())
-		return nil, cmd.Err()
-	}
-
-	res, err := cmd.Result()
+	users, err := r.redisClient.Keys("*").Result()
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
-	log.Println("【Query】Users : ", res)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	log.Println("【Query】Users : ", users)
 
-	return res, nil
+	return users, nil
 
 }
 
@@ -141,7 +149,7 @@ func (r *subscriptionResolver) MessagePosted(ctx context.Context, user string) (
 		r.mutex.Lock()
 		delete(r.messageChannels, user)
 		r.mutex.Unlock()
-
+		r.redisClient.Del(user)
 	}()
 
 	log.Println("【Subscription】MessagePosted : ", user)
@@ -167,6 +175,7 @@ func (r *subscriptionResolver) UserJoined(ctx context.Context, user string) (<-c
 		r.mutex.Lock()
 		delete(r.userChannels, user)
 		r.mutex.Unlock()
+		r.redisClient.Del(user)
 	}()
 
 	log.Println("【Subscription】UserJoined : ", user)
@@ -175,13 +184,16 @@ func (r *subscriptionResolver) UserJoined(ctx context.Context, user string) (<-c
 }
 
 func (r *Resolver) checkLogin(user string) (bool, error) {
-	val, err := r.redisClient.SIsMember("users", user).Result()
+	val, err := r.redisClient.Exists(user).Result()
 	if err != nil {
 		log.Println(err)
 		return false, err
 	}
 
-	return val, nil
+	if val == 1 {
+		return true, nil
+	}
+	return false, nil
 }
 
 func (r *Resolver) subscribeRedis() {
