@@ -5,17 +5,14 @@ import (
 )
 
 // NewRedisClient returns a client for redis.
-func NewRedisClient() *redis.Client {
+func NewRedisClient(url string) (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{
-		Addr:     "redis:6379",
+		Addr:     url,
 		Password: "",
 		DB:       0,
 	})
 
 	_, err := client.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
-	return client
+	return client, err
 }

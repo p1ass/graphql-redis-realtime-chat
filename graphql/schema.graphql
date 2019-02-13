@@ -8,7 +8,6 @@ type Mutation {
 }
 
 type Query {
-	messages: [Message!]!
 	users: [String!]!
 }
 

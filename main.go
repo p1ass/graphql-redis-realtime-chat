@@ -4,23 +4,27 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/go-redis/redis"
-	"github.com/naoki-kishi/graphql-redis-realtime-chat/graphql/server"
 	"github.com/naoki-kishi/graphql-redis-realtime-chat/infrastructure"
-
+	"log"
 	"os"
 	"time"
 )
 
 func main() {
 
+	redisURL := "redis:6379"
+
 	// if len(os.Args) != 2 {
 	// 	fmt.Println("There is an error in the argument")
 	// 	os.Exit(1)
 	// }
-	userName := "hoge"
+	userName := "fuga"
 	userKey := "online" + userName
 
-	client := infrastructure.NewRedisClient()
+	client, err := infrastructure.NewRedisClient(redisURL)
+	if err != nil {
+		panic(err)
+	}
 	defer client.Close()
 
 	val, err := client.SetNX(userKey, userName, 2*time.Minute).Result()
@@ -28,6 +32,11 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
+	}
+
+	val, err := client.SAdd("users", userName)
+	if err:= nil{
+		panic(err)
 	}
 
 	if val == false {
@@ -39,10 +48,13 @@ func main() {
 	msgChan := make(chan string)
 
 	go func() {
-		clientForRoom := infrastructure.NewRedisClient()
+		clientForRoom, err := infrastructure.NewRedisClient(redisURL)
+		if err != nil {
+			panic(err)
+		}
 		defer clientForRoom.Close()
 
-		pubsub := clientForRoom.Subscribe("room")
+		pubsub := client.Subscribe("room")
 		defer pubsub.Close()
 
 		for {
@@ -102,5 +114,6 @@ func main() {
 	// 	}
 	// }
 
-	server.StartServer()
+	s := infrastructure.NewGraphQLServer(client)
+	log.Fatal(s.Serve("/query", 8080))
 }
