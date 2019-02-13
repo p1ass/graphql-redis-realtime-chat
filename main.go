@@ -6,7 +6,6 @@ import (
 )
 
 func main() {
-
 	redisURL := "redis:6379"
 
 	client, err := infrastructure.NewRedisClient(redisURL)

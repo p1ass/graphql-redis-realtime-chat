@@ -10,6 +10,17 @@ import (
 	"time"
 )
 
+// NewGraphQLConfig returns Config and start subscribing redis pubsub.
+func NewGraphQLConfig(redisClient *redis.Client) Config {
+	resolver := newResolver(redisClient)
+
+	resolver.subscribeRedis()
+
+	return Config{
+		Resolvers: resolver,
+	}
+}
+
 // Resolver implements ResolverRoot interface.
 type Resolver struct {
 	redisClient     *redis.Client
@@ -18,19 +29,12 @@ type Resolver struct {
 	mutex           sync.Mutex
 }
 
-// NewGraphQLConfig returns Config.
-func NewGraphQLConfig(redisClient *redis.Client) Config {
-	resolver := Resolver{
+func newResolver(redisClient *redis.Client) *Resolver {
+	return &Resolver{
 		redisClient:     redisClient,
 		messageChannels: map[string]chan Message{},
 		userChannels:    map[string]chan string{},
 		mutex:           sync.Mutex{},
-	}
-
-	resolver.subscribeRedis()
-
-	return Config{
-		Resolvers: &resolver,
 	}
 }
 
