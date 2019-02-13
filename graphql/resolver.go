@@ -14,7 +14,7 @@ import (
 func NewGraphQLConfig(redisClient *redis.Client) Config {
 	resolver := newResolver(redisClient)
 
-	resolver.subscribeRedis()
+	resolver.startSubscribingRedis()
 
 	return Config{
 		Resolvers: resolver,
@@ -102,7 +102,6 @@ func (r *mutationResolver) CreateUser(ctx context.Context, user string) (string,
 	if val == false {
 		return "", errors.New("This User name has already used")
 	}
-	log.Println("createUser :", user)
 
 	// Notify new user joined.
 	r.mutex.Lock()
@@ -122,10 +121,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]string, error) {
 		log.Println(err)
 		return nil, err
 	}
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
+
 	log.Println("【Query】Users : ", users)
 
 	return users, nil
@@ -143,9 +139,9 @@ func (r *subscriptionResolver) MessagePosted(ctx context.Context, user string) (
 		return nil, errors.New("This user has not been created")
 	}
 
-	messages := make(chan Message, 1)
+	messageChan := make(chan Message, 1)
 	r.mutex.Lock()
-	r.messageChannels[user] = messages
+	r.messageChannels[user] = messageChan
 	r.mutex.Unlock()
 
 	go func() {
@@ -158,8 +154,9 @@ func (r *subscriptionResolver) MessagePosted(ctx context.Context, user string) (
 
 	log.Println("【Subscription】MessagePosted : ", user)
 
-	return messages, nil
+	return messageChan, nil
 }
+
 func (r *subscriptionResolver) UserJoined(ctx context.Context, user string) (<-chan string, error) {
 	isLogined, err := r.checkLogin(user)
 	if err != nil {
@@ -169,9 +166,9 @@ func (r *subscriptionResolver) UserJoined(ctx context.Context, user string) (<-c
 		return nil, errors.New("This user has not been created")
 	}
 
-	users := make(chan string, 1)
+	userChan := make(chan string, 1)
 	r.mutex.Lock()
-	r.userChannels[user] = users
+	r.userChannels[user] = userChan
 	r.mutex.Unlock()
 
 	go func() {
@@ -184,7 +181,7 @@ func (r *subscriptionResolver) UserJoined(ctx context.Context, user string) (<-c
 
 	log.Println("【Subscription】UserJoined : ", user)
 
-	return users, nil
+	return userChan, nil
 }
 
 func (r *Resolver) checkLogin(user string) (bool, error) {
@@ -200,8 +197,8 @@ func (r *Resolver) checkLogin(user string) (bool, error) {
 	return false, nil
 }
 
-func (r *Resolver) subscribeRedis() {
-	log.Println("Subscribe Redis")
+func (r *Resolver) startSubscribingRedis() {
+	log.Println("Start Subscribing Redis...")
 
 	go func() {
 		pubsub := r.redisClient.Subscribe("room")

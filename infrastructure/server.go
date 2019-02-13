@@ -42,7 +42,6 @@ func (s *GraphQLServer) Serve(route string, port int) error {
 	)
 
 	mux.Handle("/", handler.Playground("GraphQL playground", route))
-	mux.Handle("/playground", handler.Playground("GraphQL playground", route))
 
 	handler := cors.AllowAll().Handler(mux)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), handler)

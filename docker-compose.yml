@@ -10,6 +10,10 @@ services:
             - redis
 
         command: fresh
+
+        environment:
+            REDIS_URL: 'redis:6379'
+            PORT: '8080'
     redis:
         image: redis:latest
         ports:
