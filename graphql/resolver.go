@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/go-redis/redis"
 	"log"
 	"sync"
@@ -14,6 +15,22 @@ type Resolver struct {
 	messageChannels map[string]chan Message
 	userChannels    map[string]chan string
 	mutex           sync.Mutex
+}
+
+// NewGraphQLConfig returns Config.
+func NewGraphQLConfig(redisClient *redis.Client) Config {
+	resolver := Resolver{
+		redisClient:     redisClient,
+		messageChannels: map[string]chan Message{},
+		userChannels:    map[string]chan string{},
+		mutex:           sync.Mutex{},
+	}
+
+	resolver.subscribeRedis()
+
+	return Config{
+		Resolvers: &resolver,
+	}
 }
 
 // Mutation returns a resolver for mutation.
@@ -35,18 +52,27 @@ type mutationResolver struct{ *Resolver }
 
 func (r *mutationResolver) PostMessage(ctx context.Context, user string, message string) (*Message, error) {
 
-	err := r.createUser(user)
+	isLogined, err := r.checkLogin(user)
 	if err != nil {
 		return nil, err
 	}
-
+	if !isLogined {
+		return nil, errors.New("This user has not been created")
+	}
 	// Publish a message.
 	m := Message{
 		User:    user,
 		Message: message,
 	}
-	mb, _ := json.Marshal(m)
+	mb, err := json.Marshal(m)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+
+	}
 	r.redisClient.Publish("room", mb)
+
+	log.Println("【Mutation】PostMessage : ", m)
 
 	return &m, nil
 }
@@ -65,6 +91,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]string, error) {
 		log.Println(err)
 		return nil, err
 	}
+	log.Println("【Query】Users : ", res)
 
 	return res, nil
 
@@ -75,6 +102,7 @@ type subscriptionResolver struct{ *Resolver }
 func (r *subscriptionResolver) MessagePosted(ctx context.Context, user string) (<-chan Message, error) {
 	err := r.createUser(user)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -87,7 +115,11 @@ func (r *subscriptionResolver) MessagePosted(ctx context.Context, user string) (
 		<-ctx.Done()
 		r.mutex.Lock()
 		delete(r.messageChannels, user)
+		r.mutex.Unlock()
+
 	}()
+
+	log.Println("【Subscription】MessagePosted : ", user)
 
 	return messages, nil
 }
@@ -109,15 +141,23 @@ func (r *subscriptionResolver) UserJoined(ctx context.Context, user string) (<-c
 		r.mutex.Unlock()
 	}()
 
+	log.Println("【Subscription】UserJoined : ", user)
+
 	return users, nil
 }
 
 func (r *Resolver) createUser(user string) error {
 	// Set user to redis list.
-	if err := r.redisClient.SAdd("users", user).Err(); err != nil {
+	val, err := r.redisClient.SAdd("users", user).Result()
+	if err != nil {
 		log.Println(err)
 		return err
 	}
+
+	if val == 0 {
+		return errors.New("This User name has already used")
+	}
+	log.Println("createUser :", user)
 
 	// Notify new user joined.
 	r.mutex.Lock()
@@ -125,5 +165,52 @@ func (r *Resolver) createUser(user string) error {
 		ch <- user
 	}
 	r.mutex.Unlock()
+
 	return nil
+}
+
+func (r *Resolver) checkLogin(user string) (bool, error) {
+	val, err := r.redisClient.SIsMember("users", user).Result()
+	if err != nil {
+		log.Println(err)
+		return false, err
+	}
+
+	return val, nil
+}
+
+func (r *Resolver) subscribeRedis() {
+	log.Println("Subscribe Redis")
+
+	go func() {
+		pubsub := r.redisClient.Subscribe("room")
+		defer pubsub.Close()
+
+		for {
+			msgi, err := pubsub.Receive()
+			if err != nil {
+				panic(err)
+			}
+
+			switch msg := msgi.(type) {
+			case *redis.Message:
+
+				// Convert recieved string to Message.
+				m := Message{}
+				if err := json.Unmarshal([]byte(msg.Payload), &m); err != nil {
+					log.Println(err)
+					continue
+				}
+
+				// Notify new message.
+				r.mutex.Lock()
+				for _, ch := range r.messageChannels {
+					ch <- m
+				}
+				r.mutex.Unlock()
+
+			default:
+			}
+		}
+	}()
 }

@@ -7,27 +7,32 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/naoki-kishi/graphql-redis-realtime-chat/graphql"
 	"github.com/rs/cors"
+	"log"
 	"net/http"
-	"sync"
 )
 
-type graphQLServer struct {
-	redisClient     *redis.Client
-	messageChannels map[string]chan graphql.Message
-	mutex           sync.Mutex
+// GraphQLServer ..
+type GraphQLServer struct {
+	redisClient *redis.Client
 }
 
 // NewGraphQLServer returns GraphQL server.
-func NewGraphQLServer(client *redis.Client) *graphQLServer {
+func NewGraphQLServer(redisClient *redis.Client) *GraphQLServer {
 
-	return &graphQLServer{}
+	return &GraphQLServer{
+		redisClient: redisClient,
+	}
 }
 
-func (s *graphQLServer) Serve(route string, port int) error {
+// Serve starts GraphQL server.
+func (s *GraphQLServer) Serve(route string, port int) error {
+
+	log.Println("runnning server...")
+
 	mux := http.NewServeMux()
 	mux.Handle(
 		route,
-		handler.GraphQL(graphql.NewExecutableSchema(graphql.Config{Resolvers: &graphql.Resolver{}}),
+		handler.GraphQL(graphql.NewExecutableSchema(graphql.NewGraphQLConfig(s.redisClient)),
 			handler.WebsocketUpgrader(websocket.Upgrader{
 				CheckOrigin: func(r *http.Request) bool {
 					return true
