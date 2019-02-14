@@ -38,6 +38,8 @@ import SMessagePosted from '@/apollo/subscriptions/messagePosted.gql'
 import { mapState } from 'vuex'
 
 export default {
+  middleware: 'logined',
+
   data() {
     return {
       message: '',
@@ -112,11 +114,8 @@ export default {
 }
 </script>
 
-<style lang="scss">
-$border-color: rgb(150, 150, 150);
-$border-radius: 8px;
-$color-blue: #3498db;
-
+<style lang="scss" scoped>
+@import '@/assets/style/global.scss';
 .container {
   margin: 16px 0;
   color: rgb(50, 50, 50);

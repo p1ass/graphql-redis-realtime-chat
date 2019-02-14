@@ -1,9 +1,12 @@
 version: '3'
+volumes:
+    unsync:
 services:
     api:
         build: .
         volumes:
             - ./:/go/src/github.com/naoki-kishi/graphql-redis-realtime-chat
+            - unsync:/go/src/github.com/naoki-kishi/graphql-redis-realtime-chat/frontend
         ports:
             - '8080:8080'
         depends_on:

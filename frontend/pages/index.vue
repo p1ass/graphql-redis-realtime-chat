@@ -1,65 +1,85 @@
 <template>
   <section class="container">
-    <div>
-      <logo/>
-      <h1 class="title">
-        frontend
-      </h1>
-      <h2 class="subtitle">
-        My posh Nuxt.js project
-      </h2>
-      <div class="links">
-        <a
-          href="https://nuxtjs.org/"
-          target="_blank"
-          class="button--green">Documentation</a>
-        <a
-          href="https://github.com/nuxt/nuxt.js"
-          target="_blank"
-          class="button--grey">GitHub</a>
-      </div>
+    <h1>ユーザーを作成する</h1>
+    <div class="input-wrapper">
+      <input 
+        v-model="user" 
+        type="text">
+      <button @click="createUser">作成</button>
     </div>
   </section>
 </template>
 
 <script>
-import Logo from '~/components/Logo.vue'
+import MCreateUser from '@/apollo/mutations/createUser.gql'
+import { mapActions } from 'vuex'
 
 export default {
-  components: {
-    Logo
+  data() {
+    return {
+      user: ''
+    }
+  },
+
+  methods: {
+    ...mapActions('users', ['storeUser']),
+
+    async createUser() {
+      if (this.user) {
+        try {
+          const res = await this.$apollo.mutate({
+            mutation: MCreateUser,
+            variables: {
+              user: this.user
+            }
+          })
+
+          // Success creating user
+          if (res.data.createUser === this.user) {
+            this.storeUser(this.user)
+            this.$router.push('/room')
+          }
+        } catch (e) {
+          console.log(e)
+          alert('既にこのユーザー名は使用されています')
+        }
+      }
+    }
   }
 }
 </script>
 
-<style>
+<style lang="scss" scoped>
+@import '@/assets/style/global.scss';
+
 .container {
-  min-height: 100vh;
-  display: flex;
+  margin: 16px;
   justify-content: center;
   align-items: center;
   text-align: center;
 }
 
-.title {
-  font-family: 'Quicksand', 'Source Sans Pro', -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  display: block;
-  font-weight: 300;
-  font-size: 100px;
-  color: #35495e;
-  letter-spacing: 1px;
+.input-wrapper {
+  margin-top: 16px;
+  height: 40px;
 }
 
-.subtitle {
-  font-weight: 300;
-  font-size: 42px;
-  color: #526488;
-  word-spacing: 5px;
-  padding-bottom: 15px;
+input {
+  height: 100%;
+  margin-right: 16px;
+  padding-left: 8px;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  font-size: 20px;
 }
 
-.links {
-  padding-top: 15px;
+button {
+  width: 64px;
+  height: 100%;
+  color: white;
+  background: $color-blue;
+  border: 0;
+  border-radius: $border-radius;
+  font-size: 16px;
 }
 </style>
