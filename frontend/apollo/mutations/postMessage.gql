@@ -1,0 +1,6 @@
+mutation($user: String!, $message: String!) {
+  postMessage(user: $user, message: $message) {
+    user
+    message
+  }
+}

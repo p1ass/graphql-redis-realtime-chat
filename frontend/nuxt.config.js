@@ -34,7 +34,17 @@ module.exports = {
   /*
   ** Nuxt.js modules
   */
-  modules: [],
+  modules: ['@nuxtjs/apollo'],
+
+  apollo: {
+    clientConfigs: {
+      default: {
+        httpEndpoint: 'http://localhost:8080/query',
+        wsEndpoint: 'ws://localhost:8080/query',
+        websocketsOnly: true
+      }
+    }
+  },
 
   /*
   ** Build configuration

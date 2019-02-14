@@ -1,0 +1,3 @@
+subscription($user: String!) {
+  userJoined(user: $user)
+}
