@@ -61,7 +61,7 @@ func (r *mutationResolver) PostMessage(ctx context.Context, user string, message
 		return nil, err
 	}
 	if !isLogined {
-		return nil, errors.New("This user has not been created")
+		return nil, errors.New("This user does not exists")
 	}
 
 	// extend session expire
@@ -71,7 +71,7 @@ func (r *mutationResolver) PostMessage(ctx context.Context, user string, message
 		return nil, err
 	}
 	if val == false {
-		return nil, errors.New("This user has not been created")
+		return nil, errors.New("This user does not exists")
 	}
 
 	// Publish a message.
@@ -104,6 +104,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, user string) (string,
 	}
 
 	// Notify new user joined.
+	// TODO : Publish a notify through redis pub sub.
 	r.mutex.Lock()
 	for _, ch := range r.userChannels {
 		ch <- user
