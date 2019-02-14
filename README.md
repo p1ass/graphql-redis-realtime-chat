@@ -1,8 +1,8 @@
-# Realtime Chat Server using GraphQL Subscriptions and Redis　PubSub
+# Realtime Chat Server using GraphQL Subscriptions and Redis PubSub
 
 
 ## Abstruct
-- This is the realtime chat server using **GraphQL Subscription**.
+- This is the realtime chat server using **GraphQL Subscriptions**.
 - GraphQL server is writtern in Golang.
 - GraphQL server uses Redis PubSub in order to share messages on  multiple servers. 
 
@@ -19,7 +19,7 @@ docker-compose up
 
 2. Open `localhost:8080` and try GraphQL Playground.
 
-3. We can also try it using a Nuxt.js client.
+3. You can also try it using a Nuxt.js client.
 ```bash
 cd frontend
 yarn
