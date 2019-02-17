@@ -8,6 +8,8 @@
 
 ![Demo](./images/demo.gif)
 
+## Explanation Entry
+[GraphQL SubscriptionsとRedis PubSubを使ってリアルタイムチャットサーバーを作る](https://qiita.com/plus_kyoto/items/462209fe73ece1238d85)
 
 ## Getting started
 1. Run GraphQL server.
