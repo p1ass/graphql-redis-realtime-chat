@@ -9,12 +9,12 @@
 ![Demo](./images/demo.gif)
 
 ## Explanation Entry
-[GraphQL SubscriptionsとRedis PubSubを使ってリアルタイムチャットサーバーを作る](https://qiita.com/plus_kyoto/items/462209fe73ece1238d85)
+[GraphQL SubscriptionsとRedis PubSubを使ってリアルタイムチャットサーバーを作る](https://qiita.com/p1ass/items/462209fe73ece1238d85)
 
 ## Getting started
 1. Run GraphQL server.
 ```bash
-git clone https://github.com/naoki-kishi/graphql-redis-realtime-chat.git
+git clone https://github.com/p1ass/graphql-redis-realtime-chat.git
 cd graphql-redis-realtime-chat
 docker-compose up
 ```
