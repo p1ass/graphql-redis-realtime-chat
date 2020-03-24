@@ -8,5 +8,5 @@ require (
 	github.com/kelseyhightower/envconfig v1.3.0
 	github.com/rs/cors v1.6.0
 	github.com/vektah/gqlgen v0.7.2
-	github.com/vektah/gqlparser v1.1.0
+	github.com/vektah/gqlparser v1.3.1
 )
