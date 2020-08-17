@@ -2,6 +2,8 @@ github.com/99designs/gqlgen v0.7.2 h1:ddDBXpyQAA0mhSdIC9kQ1xI/fHPuPyJfl1Sd1lTtQZ
 github.com/99designs/gqlgen v0.7.2/go.mod h1:KSQDfLlTTGmzlRgLGm6HeKKKo598l5E2svEM6Nz2Jnw=
 github.com/99designs/gqlgen v0.11.3 h1:oFSxl1DFS9X///uHV3y6CEfpcXWrDUxVblR4Xib2bs4=
 github.com/99designs/gqlgen v0.11.3/go.mod h1:RgX5GRRdDWNkh4pBrdzNpNPFVsdoUFY2+adM6nb1N+4=
+github.com/99designs/gqlgen v0.12.1 h1:Qfi6HDi6uDxGVKvz5kg8/5iP9YF2XqhwIoBKAt+Nt6M=
+github.com/99designs/gqlgen v0.12.1/go.mod h1:7zdGo6ry9u1YBp/qlb2uxSU5Mt2jQKLcBETQiKk+Bxo=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/agnivade/levenshtein v1.0.1 h1:3oJU7J3FGFmyhn8KHjmVaZCN5hxTr7GxgRue+sxIXdQ=
 github.com/agnivade/levenshtein v1.0.1/go.mod h1:CURSv5d9Uaml+FovSIICkLbAUZ9S4RqaHDIsdSBg7lM=
@@ -25,6 +27,8 @@ github.com/gorilla/mux v1.6.1/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2z
 github.com/gorilla/websocket v1.2.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/gorilla/websocket v1.4.0 h1:WDFjx/TMzVgy9VdMMQi2K2Emtwi2QcUQsztZ/zLaH/Q=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
+github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=
+github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/hashicorp/golang-lru v0.5.0 h1:CL2msUPvZTLb5O648aiLNJw3hnBxN2+1Jq8rCOH9wdo=
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/kelseyhightower/envconfig v1.3.0 h1:IvRS4f2VcIQy6j4ORGIf9145T/AsUB+oY8LyvN8BXNM=
