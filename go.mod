@@ -2,7 +2,7 @@ module github.com/naoki-kishi/graphql-redis-realtime-chat
 
 require (
 	github.com/99designs/gqlgen v0.12.2
-	github.com/go-redis/redis v6.15.8+incompatible
+	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/gorilla/websocket v1.4.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rs/cors v1.7.0
